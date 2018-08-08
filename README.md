@@ -26,7 +26,7 @@ import java.util.Map;
 
 public class TestingXMLDuplicates {
 
-    private static String folderPath = "C:/Users/I350380/Downloads/xmlTest/";
+    private static String folderPath = "C:/Users/Downloads/xmlTest/";
     private static int i = 0, j = 0;
 
     public static void main (String[] args) throws TransformerException, ParserConfigurationException
@@ -143,7 +143,7 @@ public class TestingXMLDuplicates {
                 t.setOutputProperty(OutputKeys.INDENT, "yes");
                 t.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
 
-                File f = new File("C:/Users/I350380/Downloads/cars.xml");
+                File f = new File("C:/Users/Downloads/cars.xml");
                 StreamResult sr = new StreamResult(f);
                 Node node = doc.getDocumentElement();
                 DOMSource source = new DOMSource(node);

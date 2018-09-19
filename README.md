@@ -11,6 +11,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.swing.JOptionPane;
 import javax.xml.parsers.DocumentBuilder;
 
 import org.w3c.dom.Attr;
@@ -18,96 +19,108 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Node;
 import org.w3c.dom.Element;
+
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author james.ngondo
+ */
 public class TestingXMLDuplicates {
 
-    private static String folderPath = "C:/Users/Downloads/xmlTest/";
-    private static int i = 0, j = 0;
+    private Boolean value;
 
-    public static void main (String[] args) throws TransformerException, ParserConfigurationException
+    public void mergeMultipleXMLAndRemoveDuplicates (String folderPath, String outputDir) throws TransformerException, ParserConfigurationException
     {
-        mergeMultipleXMLAndRemoveDuplicates();
-
-    }
-
-    public static void mergeMultipleXMLAndRemoveDuplicates () throws TransformerException, ParserConfigurationException
-    {      
         Map<String, List<String>> map = new HashMap<>();
- 
+
         try {
-            // read two files
+            // read all files from folder
             File folder = new File(folderPath);
-            File[] listOfFiles = folder.listFiles();
+            
+            if (folder.exists()) {
+                
+                File[] listOfFiles = folder.listFiles();
 
-            for (File file : listOfFiles) {
-                // System.out.println(file.getName());
+                for (File file : listOfFiles) {
 
-                DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-                DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-                Document doc1 = dBuilder.parse(folderPath + file.getName());
-                doc1.getDocumentElement().normalize();
-                // System.out.print("Root element: ");
-                // System.out.println(doc1.getDocumentElement().getNodeName());
-                NodeList nList = doc1.getElementsByTagName("class");
-                // System.out.println("----------------------------");
+                    if (file.getName().endsWith(".xml")) {
+                        value = true;
+                        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+                        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+                        Document doc1 = dBuilder.parse(folderPath + "/" + file.getName());
+                        doc1.getDocumentElement().normalize();
 
-                for (int temp = 0; temp < nList.getLength(); temp++) {
-                    Node nNode = nList.item(temp);
-                    // System.out.println("\nCurrent Element :");
-                    // node name -> class
-                    // System.out.print(nNode.getNodeName() + ": ");
+                        NodeList nList = doc1.getElementsByTagName("class");
 
-                    if (nNode.getNodeType() == Node.ELEMENT_NODE) {
-                        Element eElement = (Element) nNode;
-                        // attribute of class based on name
-                        // System.out.println(eElement.getAttribute("name"));
+                        for (int temp = 0; temp < nList.getLength(); temp++) {
+                            Node nNode = nList.item(temp);
 
-                        // list of include methods
-                        NodeList includeMethods = eElement.getElementsByTagName("include");
+                            if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+                                Element eElement = (Element) nNode;
 
-                        for (int count = 0; count < includeMethods.getLength(); count++) {
-                            Node node1 = includeMethods.item(count);
+                                // list of include methods
+                                NodeList includeMethods = eElement.getElementsByTagName("include");
 
-                            if (node1.getNodeType() == node1.ELEMENT_NODE) {
-                                Element methods = (Element) node1;
-                                // System.out.print("method: ");
-                                // method name
-                                // System.out.println(methods.getAttribute("name"));
+                                for (int count = 0; count < includeMethods.getLength(); count++) {
+                                    Node node1 = includeMethods.item(count);
 
-                                List<String> current = map.get(eElement.getAttribute("name"));
-                                if (current == null) {
-                                    current = new ArrayList<String>();
-                                    map.put(eElement.getAttribute("name"), current);
-                                }
-                                if (!(current.contains(methods.getAttribute("name")))) {
-                                    current.add(methods.getAttribute("name"));
-                                }
+                                    if (node1.getNodeType() == node1.ELEMENT_NODE) {
+                                        Element methods = (Element) node1;
 
+                                        List<String> current = map.get(eElement.getAttribute("name"));
+                                        if (current == null) {
+                                            current = new ArrayList<String>();
+                                            map.put(eElement.getAttribute("name"), current);
+                                        }
+                                        if (!(current.contains(methods.getAttribute("name")))) {
+                                            current.add(methods.getAttribute("name"));
+                                        }
+
+                                    }
+                                } // inner inner for includeMethods
                             }
-                        }//inner inner for includeMethods
+
+                        } // inner for NodeList
+
+                    }
+                    else {
+                        value = false;
+
                     }
 
-                }// inner for NodeList
+                } // for files
 
-            }//for files
-        }//try
+                if (value == false) {
+                    JOptionPane.showMessageDialog(null, "Invalid file input from specified directory", "File Input Error", JOptionPane.ERROR_MESSAGE);
+                }
+                else {
+                    JOptionPane.showMessageDialog(null, "Successfully created file in specified directory. Click OK", "File Created", JOptionPane.INFORMATION_MESSAGE);
+                }
+            }
+            else {
+                JOptionPane.showMessageDialog(null, "Folder does not exist, please create a folder", "File Input Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } // try
         catch (Exception e) {
             e.printStackTrace();
         }
+
         // end try catch
+        BufferedWriter bw = null;
         try {
 
             TransformerFactory transformer = TransformerFactory.newInstance();
             Transformer t = transformer.newTransformer();
 
             for (String key : map.keySet()) {
-
-                // System.out.println("Key: " +key);
 
                 DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
                 DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
@@ -125,7 +138,7 @@ public class TestingXMLDuplicates {
                 Element methods = doc.createElement("methods");
                 rootElement.appendChild(methods);
 
-                i++;
+                // i++;
                 for (String value : map.get(key)) {
 
                     // include element
@@ -135,7 +148,6 @@ public class TestingXMLDuplicates {
                     include.setAttributeNode(attrType);
                     methods.appendChild(include);
 
-                    j++;
                 }
                 transformer = TransformerFactory.newInstance();
                 t = transformer.newTransformer();
@@ -143,14 +155,25 @@ public class TestingXMLDuplicates {
                 t.setOutputProperty(OutputKeys.INDENT, "yes");
                 t.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
 
-                File f = new File("C:/Users/Downloads/cars.xml");
+                File f = new File(outputDir + "/merged_classes_and_methods_output.txt");
                 StreamResult sr = new StreamResult(f);
                 Node node = doc.getDocumentElement();
                 DOMSource source = new DOMSource(node);
-                t.transform(source, sr);
+                // t.transform(source, sr);
 
-                StreamResult consoleResult = new StreamResult(System.out);
-                t.transform(source, consoleResult);
+                StringWriter writer = new StringWriter();
+                StreamResult result = new StreamResult(writer);
+
+                t.transform(source, result);
+                // convert to string
+                String strResult = writer.toString();
+                System.out.print(strResult);
+
+                bw = new BufferedWriter(new FileWriter(outputDir + "/merged_classes_and_methods_output.txt", true));
+                bw.write(strResult);
+                bw.flush();
+                bw.close();
+
             }
         }
         catch (Exception e) {
@@ -160,4 +183,5 @@ public class TestingXMLDuplicates {
     }
 
 }
+
 ```

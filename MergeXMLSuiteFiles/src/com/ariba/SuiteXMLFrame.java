@@ -13,15 +13,23 @@ class SuiteXMLFrame extends JFrame {
     /**
      * @author james.ngondo
      */
-    private String placeholder = "C:/Users";
     
     private static final long serialVersionUID = 1L;
-    private JButton btnSubmit = new JButton("Merge Class Names And Methods");
-    private JButton classNames = new JButton("Merge Class Names Only");
+    private JButton btnClassAndMethods = new JButton("Merge Class Names And Methods");
+    private JButton btnClassNames = new JButton("Merge Class Names Only");
     private JButton btnExit = new JButton("Exit");
+    private JButton btnInputFilePathBrowse = new JButton("Browse...");
+    private JButton btnOutFilePathBrowse = new JButton("Browse...");
+    
+    private StringBuilder sb;
+    private String inputFilePath;
+    private String outputFilePath;
 
-    private JTextField txtA = new JTextField(placeholder);
-    private JTextField txtB = new JTextField(placeholder);
+    JFileChooser chooser;
+    String choosertitle;
+
+    private JTextField txtA = new JTextField();
+    private JTextField txtB = new JTextField();
 
     private JLabel lblA = new JLabel("Enter File Input Directory:");
     private JLabel lblB = new JLabel("Enter File Output Directory:");
@@ -33,8 +41,10 @@ class SuiteXMLFrame extends JFrame {
         setLocation(new Point(600, 500));
         lblA.setFont(new Font("Arial", Font.BOLD, 16));
         lblB.setFont(new Font("Arial", Font.BOLD, 16));
-        btnSubmit.setFont(new Font("Arial", Font.PLAIN, 16));
-        classNames.setFont(new Font("Arial", Font.PLAIN, 16));
+        btnClassAndMethods.setFont(new Font("Arial", Font.PLAIN, 16));
+        btnClassNames.setFont(new Font("Arial", Font.PLAIN, 16));
+        btnInputFilePathBrowse.setFont(new Font("Arial", Font.PLAIN, 16));
+        btnOutFilePathBrowse.setFont(new Font("Arial", Font.PLAIN, 16));
         btnExit.setFont(new Font("Arial", Font.PLAIN, 16));
         txtA.setFont(new Font("Arial", Font.PLAIN, 15));
         txtB.setFont(new Font("Arial", Font.PLAIN, 15));
@@ -47,10 +57,12 @@ class SuiteXMLFrame extends JFrame {
 
     private void initComponent ()
     {
-        // 240=y vertical 310 = x horizontal
-        btnSubmit.setBounds(310, 190, 280, 40);
-        classNames.setBounds(310, 240, 280, 40);
+        //310 = x horizontal  240=y vertical
+        btnClassAndMethods.setBounds(310, 190, 280, 40);
+        btnClassNames.setBounds(310, 240, 280, 40);
         btnExit.setBounds(310, 300, 280, 40);
+        btnInputFilePathBrowse.setBounds(600, 30, 120, 40);
+        btnOutFilePathBrowse.setBounds(600, 90, 120, 40);
 
         txtA.setBounds(290, 30, 300, 40);
         txtB.setBounds(290, 90, 300, 40);
@@ -58,17 +70,19 @@ class SuiteXMLFrame extends JFrame {
         lblA.setBounds(20, 40, 200, 30);
         lblB.setBounds(20, 90, 210, 30);
 
-        add(btnSubmit);
-        add(classNames);
+        add(btnClassAndMethods);
+        add(btnClassNames);
         add(btnExit);
+        add(btnInputFilePathBrowse);
+        add(btnOutFilePathBrowse);
 
         add(lblA);
         add(lblB);
 
         add(txtA);
         add(txtB);
-    }
-
+    }  
+   
     private void initEvent ()
     {
 
@@ -79,14 +93,14 @@ class SuiteXMLFrame extends JFrame {
             }
         });
 
-        btnSubmit.addActionListener(new ActionListener() {
+        btnClassAndMethods.addActionListener(new ActionListener() {
             public void actionPerformed (ActionEvent e)
             {
-                btnSubmitClick(e);
+                btnClassAndMethodsClick(e);
             }
         });
         
-        classNames.addActionListener(new ActionListener() {
+        btnClassNames.addActionListener(new ActionListener() {
             public void actionPerformed (ActionEvent e)
             {
                 btnClassNamesClick(e);
@@ -99,13 +113,27 @@ class SuiteXMLFrame extends JFrame {
                 btnExitClick(e);
             }
         });
+        
+        btnInputFilePathBrowse.addActionListener(new ActionListener() {
+            public void actionPerformed (ActionEvent e)
+            {
+                btnInputFilePathBrowseClick(e);
+            }
+        });
+        
+        btnOutFilePathBrowse.addActionListener(new ActionListener() {
+            public void actionPerformed (ActionEvent e)
+            {
+                btnOutFilePathBrowseClick(e);
+            }
+        });
     }
 
-    private void btnSubmitClick (ActionEvent evt)
+    private void btnClassAndMethodsClick (ActionEvent evt)
     {
         TestingXMLDuplicates xml = new TestingXMLDuplicates();
-        String folderPath = txtA.getText();
-        String outputDir = txtB.getText();
+        String folderPath = getInputFilePath();
+        String outputDir = getOutputFilePath();
 
         try {
             xml.mergeMultipleXMLAndRemoveDuplicates(folderPath, outputDir);
@@ -119,8 +147,8 @@ class SuiteXMLFrame extends JFrame {
             e.printStackTrace();
         }
         
-        txtA.setText(placeholder);
-        txtB.setText(placeholder);
+        txtA.setText("");
+        txtB.setText("");
 
     }
     
@@ -133,11 +161,107 @@ class SuiteXMLFrame extends JFrame {
         frame.setVisible(true);
 
     }
+    public void setInputFilePath (String path)
+    {
+        this.inputFilePath = path;
+    }
+    
+    public void setOutputFilePath (String outputFilePath)
+    {
+        this.outputFilePath = outputFilePath;
+    }
 
+    private void btnInputFilePathBrowseClick (ActionEvent evt)
+    {
+        sb = new StringBuilder();
+
+        chooser = new JFileChooser();
+        chooser.setCurrentDirectory(new java.io.File("."));
+        chooser.setDialogTitle(choosertitle);
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        //
+        // disable the "All files" option.
+        //
+        chooser.setAcceptAllFileFilterUsed(false);
+        //
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+           // System.out.println("getCurrentDirectory(): " + chooser.getCurrentDirectory());
+            inputFilePath = chooser.getSelectedFile().toString();
+
+           // System.out.println("getSelectedFile() : " + path);
+        }
+        else {
+            //System.out.println("No Selection ");
+        }
+
+        String[] words = inputFilePath.split(" ");
+        for (int i = 0; i < words.length; i++) {
+
+            String str = words[i].replace("\\", "/");
+            sb.append(str);
+
+        }
+        setInputFilePath (sb.toString());
+        txtA.setText(getInputFilePath());
+        
+        System.out.println("Input File Path: " + getInputFilePath());    
+
+    }
+    
+    private void btnOutFilePathBrowseClick (ActionEvent evt)
+    {
+        sb = new StringBuilder();
+
+        chooser = new JFileChooser();
+        chooser.setCurrentDirectory(new java.io.File("."));
+        chooser.setDialogTitle(choosertitle);
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        //
+        // disable the "All files" option.
+        //
+        chooser.setAcceptAllFileFilterUsed(false);
+        //
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+           // System.out.println("getCurrentDirectory(): " + chooser.getCurrentDirectory());
+            outputFilePath = chooser.getSelectedFile().toString();
+
+           // System.out.println("getSelectedFile() : " + path);
+        }
+        else {
+            //System.out.println("No Selection ");
+        }
+
+        String[] words = outputFilePath.split(" ");
+        for (int i = 0; i < words.length; i++) {
+
+            String str = words[i].replace("\\", "/");
+            sb.append(str);
+
+        }
+        setOutputFilePath (sb.toString());
+        txtB.setText(getOutputFilePath());
+        
+        System.out.println("Output File Path: " + getOutputFilePath());    
+
+    }
+    
+    
     private void btnExitClick (ActionEvent evt)
     {
         System.exit(0);
 
     }
+    
+    
+    public String getOutputFilePath ()
+    {
+        return outputFilePath;
+    }
+
+    public String getInputFilePath ()
+    {
+        return inputFilePath;
+    }
+
 
 }
